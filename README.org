@@ -1,0 +1,51 @@
+* Theme Faves Emacs (a work in progress)
+
+** What its for?
+
+ - Theme Faves works with color-theme to provide a rapid way of
+   switching between and selecting favourite themes
+ - Note: I can't take the credit for having written any of the
+   audition themes
+
+** Features
+
+ - Single key or chord stroke switching between unlimited favourite themes
+ - Easy selection of new favourites from over 150 themes
+ - Easy deletion of favourites
+ - Easy generation of new theme templates from favourites
+
+** Other theme switchers
+
+There are other theme switchers out there such as xxx which may be
+more suitable than Theme Faves, but this fairly simple system scratched an
+itch for me
+
+** TODO Setup
+
+(add-to-path 'load-path (concat dotfile-dir "theme-faves"))
+(require 'theme-faves)
+
+** TODO Key-bindings
+
+My setup is as follows...
+
+ - Favourite theme cycling bound to f7
+ - All theme cycling bound to C-f7
+
+These aren't currently bound to keys since they aren't used very
+often...
+
+ - M-x theme-faves-save 
+   - Save currently auditioned theme to favourites
+ - M-x theme-faves-delete
+   - Delete currently displayed theme from favourites 
+ - M-x theme-faves-create 
+   - TODO Create template theme from this favourite for future modification
+
+** TODO Improvements
+
+ - Finish and test properly
+   - Currently only tested with color-theme-6.6.0 on linux
+ - Implement reverse cycling for S-f7 and S-C-f7 (I think these
+   bindings are possible?)
+
