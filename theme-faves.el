@@ -1,19 +1,12 @@
 ;; theme-faves.el
 ;; Martyn Jago
 
-(setq theme-faves-using-faves t)
-(setq theme-faves-current-idx 10)
-(setq theme-faves-saved-idx 0)
-(setq theme-faves-current-idx 0)
-
-(setq theme-faves-list '(0 1 2 3 4 5 6 7))
-
 (defun theme-get-fave-full-idx(idx)
   (nth idx theme-faves-list))
 
 (defun theme-get-fave-theme(idx)
   (let ((temp (theme-get-fave-full-idx idx)))
-    (if temp (nth temp theme-faves-audition-list)
+    (when temp (nth temp theme-faves-audition-list)
       nil)))
 
 (defun theme-faves-insert (elem org-list pos)
@@ -32,36 +25,39 @@
 (defun theme-faves-save ()
   "Save current auditioned theme to favourites"
   (interactive)
-  (if theme-faves-current-idx
+  (when theme-faves-active-idx
       (progn
-        (setq theme-faves-list (theme-faves-insert
-                     theme-faves-current-idx
+        (customize-save-variable 'theme-faves-list (theme-faves-insert
+                     theme-faves-active-idx
                      theme-faves-list
-                     (if theme-faves-using-faves
-                         theme-faves-current-idx
+                     (if theme-faves-has-focus-p
+                         theme-faves-active-idx
                        theme-faves-saved-idx)))
         (theme-faves-saved-message))))
 
 (defun theme-faves-saved-message ()
   (message "%S added to favourite themes"
-           (nth theme-faves-current-idx  theme-faves-audition-list)))
+           (nth theme-faves-active-idx  theme-faves-audition-list)))
 
 (defun theme-faves-delete ()
   "Delete current favourite from favourites. You can add back to favourites by re-auditioning again later if you need to."
   (interactive)
-  (if (and theme-faves-using-faves
-           theme-faves-current-idx
+  (when (and theme-faves-has-focus-p
+           theme-faves-active-idx
            (> (length theme-faves-list) 1))
       (progn
-        (setq theme-faves-list (theme-faves-remove theme-faves-list (+ 1 theme-faves-current-idx)))
+        (customize-save-variable
+         'theme-faves-list
+         (theme-faves-remove theme-faves-list
+                             (+ 1 theme-faves-active-idx)))
         (theme-faves--cycle t))))
 
-;;todo
+;;TODO
 (defun theme-faves-delete-audition ()
   "Delete theme from audition candidate themes"
   (interactive))
 
-;;todo
+;;TODO
 (defun theme-faves-create ()
   "Create new named theme template for modification and further customization."
   (interactive))
@@ -78,35 +74,54 @@
 
 (defun theme-faves--cycle (do-faves-p)
   (interactive)
-  (if (not (equal do-faves-p theme-faves-using-faves))
+  (if (not (equal do-faves-p theme-faves-has-focus-p))
       (progn
-        (let ((temp theme-faves-current-idx))
-          (setq theme-faves-current-idx theme-faves-saved-idx)
+        (let ((temp theme-faves-active-idx))
+          (setq theme-faves-active-idx theme-faves-saved-idx)
           (setq theme-faves-saved-idx temp)
-          (setq theme-faves-using-faves do-faves-p)))
-    (setq theme-faves-current-idx (+ 1 theme-faves-current-idx)))
-  (if do-faves-p
-      (if (not (nth theme-faves-current-idx theme-faves-list))
-          (setq theme-faves-current-idx 0)))
-  (if (<= (length theme-faves-audition-list) theme-faves-current-idx)
-    (setq theme-faves-current-idx 0))
-  (theme-faves-activate 
-   (if do-faves-p
-       (nth (nth theme-faves-current-idx theme-faves-list) theme-faves-audition-list)
-     (nth theme-faves-current-idx  theme-faves-audition-list))))
+          (setq theme-faves-has-focus-p do-faves-p)))
+    (setq theme-faves-active-idx (+ 1 theme-faves-active-idx)))
+  (when theme-faves-has-focus-p
+      (when (not (nth theme-faves-active-idx theme-faves-list))
+          (setq theme-faves-active-idx 0)))
+  (when (<= (length theme-faves-audition-list) theme-faves-active-idx)
+    (setq theme-faves-active-idx 0))
+  (theme-faves-activate))
 
-(defun theme-faves-activate (theme )
-  (funcall theme)
-  (message
-   "Theme changed to: %S, %d of %d"
-   theme
-   (+ theme-faves-current-idx 1)
-    (if theme-faves-using-faves
-        (length theme-faves-list)
-      (length theme-faves-audition-list))))
+(defun theme-faves-activate ()
+  (let ((theme
+         (if theme-faves-has-focus-p
+             (progn
+               (nth (nth
 
-(setq theme-faves-audition-list
-  (list
+                     (customize-save-variable
+                      'theme-faves-idx theme-faves-active-idx)
+
+                     ;;;                     theme-faves-active-idx
+                     
+                     theme-faves-list)
+                    theme-faves-audition-list))
+           (nth theme-faves-active-idx
+                theme-faves-audition-list))))
+    (funcall theme)
+    (message "Theme changed to: %S, %d of %d"
+             theme
+             (+ theme-faves-active-idx 1)
+             (if theme-faves-has-focus-p
+                 (length theme-faves-list)
+               (length theme-faves-audition-list)))))
+
+(defcustom theme-faves-idx 0
+  "Index of favourite in use"
+  :type 'integer
+  :group 'theme-faves)
+
+(defcustom theme-faves-list '(0 126 105 151 55 8)
+  "Favourite Themes List"
+  :type 'list
+  :group 'theme-faves)
+
+(defcustom theme-faves-audition-list (list
   'color-theme-tangotango
   'color-theme-renegade
   'color-theme-feng-shui
@@ -261,6 +276,18 @@
   'color-theme-pok-wob
   'color-theme-pok-wog
   'color-theme-tty-dark
-  'color-theme-xp))
+  'color-theme-xp)
+  "Audition Themes List"
+  :type 'list
+  :set 'set-default
+  :group 'theme-faves)
+
+(defun theme-faves-init ()
+  (interactive)
+  (setq theme-faves-active-idx
+        theme-faves-idx)
+  (setq theme-faves-has-focus-p t)
+  (setq theme-faves-saved-idx 0)
+  (theme-faves-activate))
 
 (provide 'theme-faves)
