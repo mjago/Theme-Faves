@@ -2,40 +2,46 @@
 
 ** What its for?
 
- - Theme Faves works with color-theme to provide a rapid way of
+ - Theme Faves works with [[http://www.emacswiki.org/emacs/ColorTheme][color-theme]] to provide a rapid way of
    switching between and selecting favourite themes
- - Note: I can't take the credit for having written any of the
-   audition themes
+   - (themes provided by [[http://www.emacswiki.org/emacs/ColorTheme][color-theme]] - add to these at will)
 
 ** Features
 
- - Single key or chord stroke switching between unlimited favourite themes
+ - Single key or chord stroke switching between unlimited favourite
+   themes
  - Easy selection of new favourites from over 150 themes
  - Easy deletion of favourites
  - Easy generation of new theme templates from favourites
+ - To reverse favourites or audition cycle direction hold down shift
 
 ** Other theme switchers
 
-There are other theme switchers out there such as xxx which may be
-more suitable than Theme Faves, but this fairly simple system scratched an
-itch for me
+   Other theme switchers exist and may be checked out [[http://www.emacswiki.org/emacs/ColorTheme][here]]
 
 ** TODO Setup
+*** I have used the F7 key for theme cycling here
+ - Favourites cycling on F7
+ - Favourites reverse cycling on Shift-F7
+ - Audition cycling on Control-F7
+ - Audition reverse cycling on Shift-Control-F7
+
+#+BEGIN_SRC
 
 (add-to-path 'load-path (concat dotfile-dir "theme-faves"))
 (require 'theme-faves)
 (add-hook 'window-setup-hook 'theme-faves-init)
 
-** TODO Key-bindings
+(global-set-key [f7] 'theme-faves-cycle-up)
+(global-set-key [S-f7] 'theme-faves-cycle-down)
+(global-set-key [C-f7] 'theme-faves-audition-cycle-up)
+(global-set-key [S-C-f7] 'theme-faves-audition-cycle-down)
 
-My setup is as follows...
+#+END_SRC
 
- - Favourite theme cycling bound to f7
-   - (global-set-key [f7] 'theme-faves-cycle)
- - All theme cycling bound to C-f7
-   - (global-set-key [C-f7] 'theme-faves-audition-cycle)
+** Other functions
 
-The following functions  aren't currently bound to keys since they
+The following functions  are not currently bound to keys since they
 aren't used very often...
 
  - M-x theme-faves-save 
