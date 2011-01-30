@@ -26,7 +26,7 @@
  - Audition cycling on Control-F7
  - Audition reverse cycling on Shift-Control-F7
 
-#+BEGIN_SRC
+#+BEGIN_SRC emacs-lisp
 
 (add-to-path 'load-path (concat dotfile-dir "theme-faves"))
 (require 'theme-faves)
@@ -44,8 +44,8 @@
 The following functions  are not currently bound to keys since they
 aren't used very often...
 
- - M-x theme-faves-save 
-   - Save currently auditioned theme to favourites
+ - M-x theme-faves-insert
+   - Insert current auditioned theme into favourites
  - M-x theme-faves-delete
    - Delete currently displayed theme from favourites 
  - M-x theme-faves-create 
