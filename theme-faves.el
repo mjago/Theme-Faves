@@ -1,19 +1,73 @@
 ;; theme-faves.el
 ;; Martyn Jago
+;; * Theme Faves Emacs
+;; 
+;; ** Setup
+;; 
+;; *** I have used the F7 key for theme cycling
+;;  - Favourites cycling on F7
+;;  - Favourites reverse cycling on Shift-F7
+;;  - Audition cycling on Control-F7
+;;  - Audition reverse cycling on Shift-Control-F7
+;; 
+;; #+BEGIN_SRC emacs-lisp
+;; 
+;; (add-to-path 'load-path (concat dotfile-dir "theme-faves"))
+;; (require 'theme-faves)
+;; (add-hook 'window-setup-hook 'theme-faves-init)
+;; 
+;; ;; to add to F7 key...
+;; (global-set-key [f7] 'theme-faves-cycle-up)
+;; (global-set-key [S-f7] 'theme-faves-cycle-down)
+;; (global-set-key [C-f7] 'theme-faves-audition-cycle-up)
+;; (global-set-key [S-C-f7] 'theme-faves-audition-cycle-down)
+;; 
+;; #+END_SRC
+;; 
+;; 
+;; ** What its for?
+;; 
+;;  - Theme Faves works with [[http://www.emacswiki.org/emacs/ColorTheme][color-theme]] to provide a rapid way of
+;;    switching between and selecting favourite themes
+;;    - (themes provided by [[http://www.emacswiki.org/emacs/ColorTheme][color-theme]] - add to these at will)
+;; 
+;; ** Features
+;; 
+;;  - Single key or chord stroke switching between unlimited favourite
+;;    themes
+;;  - Easy selection of new favourites from over 150 themes
+;;  - Easy deletion of favourites
+;;  - Easy generation of new theme templates from favourites
+;;  - To reverse favourites or audition cycle direction hold down shift
+;;  - theme-faves-select(theme) function available for buffer switchers
+;;    to switch theme
+;; 
+;; ** Other functions
+;; 
+;; The following functions  are not currently bound to keys since they
+;; aren't used very often...
+;; 
+;;  - M-x theme-faves-insert
+;;    - Insert current auditioned theme into favourites
+;;  - M-x theme-faves-delete
+;;    - Delete currently displayed theme from favourites 
+;; 
+;; ** Other theme switchers
+;; 
+;;    Other theme switchers exist and may be checked out [[http://www.emacswiki.org/emacs/ColorTheme][here]]
 
 (defun theme-faves-init ()
   (interactive)
-  (setq theme-faves-active-idx
-        theme-faves-idx)
+  (setq theme-faves-active-idx 0)
   (setq theme-faves-has-focus-p t)
   (setq theme-faves-saved-idx 0)
   (theme-faves-activate) t)
 
-(defun theme-faves-get-fave-full-idx(idx)
+(defun theme-faves-convert-fave-idx(idx)
   (nth idx theme-faves-list))
 
 (defun theme-faves-get-fave-theme(idx)
-  (let ((temp (theme-faves-get-fave-full-idx idx)))
+  (let ((temp ( theme-faves-convert-fave-idx idx)))
     (nth temp theme-faves-audition-list)))
 
 (defun theme-faves--insert (elem org-list pos)
@@ -50,7 +104,7 @@
   (if (equal pos ini)
       (cdr org-list)
     (cons (car org-list) (theme-faves-remove (cdr org-list) pos (+ ini 1)))))
-
+ 
 (defun theme-faves-delete ()
   "Delete current favourite from favourites. You can add back to favourites by re-auditioning again later if you need to."
   (interactive)
@@ -58,15 +112,17 @@
   (when (not theme-faves-has-focus-p)
     (theme-faves-cycle-up))
 
-  (when (and theme-faves-active-idx
+  (if (and theme-faves-active-idx
              (> (length theme-faves-list) 1))
     (progn
       (customize-save-variable
        'theme-faves-list
        (theme-faves-remove theme-faves-list
                            (+ 1 theme-faves-active-idx)))
+      (theme-faves-wrap-themes 'up)
       (theme-faves-activate)
-      )))
+      )
+    (message "You need at least one favourite theme!")))
 
 ;;TODO
 (defun theme-faves-delete-audition ()
@@ -74,6 +130,25 @@
   (interactive)
   (theme-faves-startup-check))
 
+(defun theme-faves-select()
+  "Switches theme to theme referenced by THEME-IDX if it exists THEME-IDX must be greater or equal to 1"
+  (interactive)
+  (let (( theme-idx
+          (cond ((equal major-mode 'org-mode)
+                 2)
+          ((equal major-mode 'emacs-lisp-mode)
+                 3)
+                (t 1))))
+    (when (and (<= theme-idx (length theme-faves-list))
+               (> theme-idx 0))
+      (progn
+        (setq theme-idx (- theme-idx 1))
+        (if theme-faves-has-focus-p
+            (setq theme-faves-active-idx theme-idx)
+          (progn
+            (setq theme-faves-saved-idx theme-idx)
+            (theme-faves-swap-cycle-mode)))
+        (theme-faves-activate)))))
 ;;TODO
 (defun theme-faves-create ()
   "Create new named theme template for modification and further customization."
@@ -131,7 +206,7 @@
 
 (defun theme-faves-ensure-within-range (direction)
   (if theme-faves-has-focus-p
-      (when (or (not (nth theme-faves-active-idx theme-faves-list))
+      (when (or (>= theme-faves-active-idx (length theme-faves-list))
                 (< theme-faves-active-idx 0))
         (theme-faves-wrap-themes direction))
     (when (or (>= theme-faves-active-idx (length theme-faves-audition-list))
@@ -139,6 +214,7 @@
       (theme-faves-wrap-themes direction))))
 
 (defun theme-faves-wrap-themes (direction)
+
   (if theme-faves-has-focus-p
       (if (equal direction 'up)
           (setq theme-faves-active-idx 0)
@@ -151,12 +227,12 @@
   (let ((theme
          (if theme-faves-has-focus-p
              (progn
-               (nth (nth (customize-save-variable
-                          'theme-faves-idx theme-faves-active-idx)
-                         theme-faves-list)
+               (nth (theme-faves-convert-fave-idx
+                     theme-faves-active-idx)
                     theme-faves-audition-list))
            (nth theme-faves-active-idx
                 theme-faves-audition-list))))
+
     (if (theme-faves-ensure-exists-p theme)
         (progn
           (funcall theme)
@@ -172,7 +248,8 @@
                (length theme-faves-audition-list))))
 
 (defun theme-faves-ensure-exists-p (theme)
-  (fboundp theme))
+  (if (and theme
+           (fboundp theme)) t  nil))
 
 (defun theme-faves-activated-message (theme)
   (message "Theme changed to: %S, %d of %d"
@@ -188,141 +265,23 @@
            theme-faves-saved-idx
            theme-faves-has-focus-p))
 
-(defcustom theme-faves-idx 0
-  "Index of favourite in use"
-  :type 'integer
-  :group 'theme-faves)
-
-(defcustom theme-faves-list '(0 125 104 150 54 7)
+(defcustom theme-faves-list '(13 14 3)
   "Favourite Themes List"
   :type 'list
   :group 'theme-faves)
 
-(defcustom theme-faves-audition-list
-  (list
-   'color-theme-renegade
-   'color-theme-feng-shui
-   'color-theme-matrix
-   'color-theme-lawrence
-   'color-theme-calm-forest
-   'color-theme-vim-colors
-   'color-theme-charcoal-black
-   'color-theme-andreas
-   'color-theme-clarity
-   'color-theme-late-night
-   'color-theme-emacs-nw
-   'color-theme-shaman
-   'color-theme-lethe
-   'color-theme-bharadwaj-slate
-   'color-theme-whateveryouwant
-   'color-theme-dark-green
-   'color-theme-gray30
-   'color-theme-xp
-   'color-theme-resolve
-   'color-theme-euphoria
-   'color-theme-blue-mood
-   'color-theme-dark-blue2
-   'color-theme-black-on-gray
-   'color-theme-aliceblue
-   'color-theme-tty-dark
-   'color-theme-arjen
-   'color-theme-katester
-   'color-theme-comidia
-   'color-theme-kingsajz
-   'color-theme-deep-blue
-   'color-theme-ld-dark
-   'color-theme-jsc-light2
-   'color-theme-emacs-21
-   'color-theme-word-perfect
-   'color-theme-gray1
-   'color-theme-jonadabian-slate
-   'color-theme-dark-blue
-   'color-theme-subtle-blue
-   'color-theme-dark-erc
-   'color-theme-blue-erc
-   'color-theme-marine
-   'color-theme-mistyday
-   'color-theme-digital-ofs1
-   'color-theme-taming-mr-arneson
-   'color-theme-dark-laptop
-   'color-theme-snowish
-   'color-theme-robin-hood
-   'color-theme-salmon-diff
-   'color-theme-oswald
-   'color-theme-bharadwaj
-   'color-theme-hober
-   'color-theme-blippblopp
+(defcustom theme-faves-audition-list (list
    'color-theme-aalto-dark
    'color-theme-aalto-light
-   'color-theme-montz
-   'color-theme-snow
-   'color-theme-jedit-grey
-   'color-theme-midnight
-   'color-theme-gtk-ide
-   'color-theme-scintilla
-   'color-theme-classic
-   'color-theme-infodoc
-   'color-theme-high-contrast
-   'color-theme-parus
-   'color-theme-marquardt
-   'color-theme-taylor
-   'color-theme-raspopovic
-   'color-theme-ramangalahy
-   'color-theme-goldenrod
-   'color-theme-beige-eshell
-   'color-theme-standard-ediff
-   'color-theme-beige-diff
-   'color-theme-jb-simple
-   'color-theme-greiner
-   'color-theme-jsc-dark
-   'color-theme-jsc-light
-   'color-theme-xemacs
-   'color-theme-pierson
-   'color-theme-rotor
-   'color-theme-blue-sea
-   'color-theme-pok-wob
-   'color-theme-pok-wog
-   'color-theme-subtle-hacker
-   'color-theme-retro-orange
-   'color-theme-retro-green
-   'color-theme-billw
-   'color-theme-sitaramv-nt
-   'color-theme-sitaramv-solaris
-   'color-theme-fischmeister
-   'color-theme-standard
-   'color-theme-wheat
-   'color-theme-ryerson
-   'color-theme-jonadabian
-   'color-theme-simple-1
-   'color-theme-gnome2
-   'color-theme-dark-info
-   'color-theme-dark-font-lock
-   'color-theme-salmon-font-lock
-   'color-theme-blue-eshell
-   'color-theme-dark-gnus
-   'color-theme-blue-gnus
-   'color-theme-gnome
-   'color-theme-hober
-   'color-theme-emacs-21
+   'color-theme-aliceblue
+   'color-theme-andreas
    'color-theme-arjen
+   'color-theme-bharadwaj
    'color-theme-bharadwaj-slate
    'color-theme-billw
-   'color-theme-blue-gnus
-   'color-theme-dark-gnus
-   'color-theme-blue-eshell
-   'color-theme-retro-green
-   'color-theme-retro-orange
-   'color-theme-subtle-hacker
-   'color-theme-salmon-font-lock
-   'color-theme-dark-font-lock
-   'color-theme-dark-info
-   'color-theme-simple-1
-   'color-theme-jonadabian
-   'color-theme-ryerson
-   'color-theme-standard
+   'color-theme-black-on-gray
+   'color-theme-blippblopp
    'color-theme-blue-mood
-   'color-theme-sitaramv-solaris
-   'color-theme-sitaramv-nt
    'color-theme-blue-sea
    'color-theme-calm-forest
    'color-theme-charcoal-black
@@ -331,10 +290,10 @@
    'color-theme-comidia
    'color-theme-dark-blue
    'color-theme-dark-blue2
-   'color-theme-dark-erc
    'color-theme-dark-laptop
    'color-theme-deep-blue
    'color-theme-digital-ofs1
+   'color-theme-emacs-21
    'color-theme-emacs-nw
    'color-theme-euphoria
    'color-theme-feng-shui
@@ -345,18 +304,65 @@
    'color-theme-gray1
    'color-theme-gray30
    'color-theme-greiner
+   'color-theme-gtk-ide
+   'color-theme-high-contrast
+   'color-theme-hober
    'color-theme-infodoc
+   'color-theme-jb-simple
+   'color-theme-jedit-grey
+   'color-theme-jonadabian
+   'color-theme-jonadabian-slate
+   'color-theme-jsc-dark
+   'color-theme-jsc-light
+   'color-theme-jsc-light2
+   'color-theme-katester
+   'color-theme-kingsajz
+   'color-theme-late-night
    'color-theme-lawrence
    'color-theme-ld-dark
+   'color-theme-lethe
+   'color-theme-marine
+   'color-theme-marquardt
+   'color-theme-matrix
+   'color-theme-midnight
+   'color-theme-mistyday
    'color-theme-montz
    'color-theme-oswald
+   'color-theme-parus
+   'color-theme-pierson
    'color-theme-pok-wob
    'color-theme-pok-wog
+   'color-theme-ramangalahy
+   'color-theme-raspopovic
+   'color-theme-renegade
+   'color-theme-resolve
+   'color-theme-retro-green
+   'color-theme-retro-orange
+   'color-theme-robin-hood
+   'color-theme-rotor
+   'color-theme-ryerson
+   'color-theme-scintilla
+   'color-theme-shaman
+   'color-theme-simple-1
+   'color-theme-sitaramv-nt
+   'color-theme-sitaramv-solaris
+   'color-theme-snow
+   'color-theme-snowish
+   'color-theme-standard
+   'color-theme-subtle-blue
+   'color-theme-subtle-hacker
+   'color-theme-taming-mr-arneson
+   'color-theme-taylor
    'color-theme-tty-dark
+   'color-theme-vim-colors
+   'color-theme-whateveryouwant
+   'color-theme-wheat
+   'color-theme-word-perfect
+   'color-theme-xemacs
    'color-theme-xp)
   "Audition Themes List"
   :type 'list
-  :set 'set-default
   :group 'theme-faves)
 
 (provide 'theme-faves)
+

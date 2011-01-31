@@ -1,4 +1,27 @@
-* Theme Faves Emacs (a work in progress)
+* Theme Faves Emacs
+
+** Setup
+
+*** I have used the F7 key for theme cycling here
+ - Favourites cycling on F7
+ - Favourites reverse cycling on Shift-F7
+ - Audition cycling on Control-F7
+ - Audition reverse cycling on Shift-Control-F7
+
+#+BEGIN_SRC emacs-lisp
+
+(add-to-path 'load-path (concat dotfile-dir "theme-faves"))
+(require 'theme-faves)
+(add-hook 'window-setup-hook 'theme-faves-init)
+
+;; to add to F7 key...
+(global-set-key [f7] 'theme-faves-cycle-up)
+(global-set-key [S-f7] 'theme-faves-cycle-down)
+(global-set-key [C-f7] 'theme-faves-audition-cycle-up)
+(global-set-key [S-C-f7] 'theme-faves-audition-cycle-down)
+
+#+END_SRC
+
 
 ** What its for?
 
@@ -14,30 +37,8 @@
  - Easy deletion of favourites
  - Easy generation of new theme templates from favourites
  - To reverse favourites or audition cycle direction hold down shift
-
-** Other theme switchers
-
-   Other theme switchers exist and may be checked out [[http://www.emacswiki.org/emacs/ColorTheme][here]]
-
-** TODO Setup
-*** I have used the F7 key for theme cycling here
- - Favourites cycling on F7
- - Favourites reverse cycling on Shift-F7
- - Audition cycling on Control-F7
- - Audition reverse cycling on Shift-Control-F7
-
-#+BEGIN_SRC emacs-lisp
-
-(add-to-path 'load-path (concat dotfile-dir "theme-faves"))
-(require 'theme-faves)
-(add-hook 'window-setup-hook 'theme-faves-init)
-
-(global-set-key [f7] 'theme-faves-cycle-up)
-(global-set-key [S-f7] 'theme-faves-cycle-down)
-(global-set-key [C-f7] 'theme-faves-audition-cycle-up)
-(global-set-key [S-C-f7] 'theme-faves-audition-cycle-down)
-
-#+END_SRC
+ - theme-faves-select(theme) function available for buffer switchers
+   to switch theme
 
 ** Other functions
 
@@ -48,13 +49,8 @@ aren't used very often...
    - Insert current auditioned theme into favourites
  - M-x theme-faves-delete
    - Delete currently displayed theme from favourites 
- - M-x theme-faves-create 
-   - TODO Create template theme from this favourite for future modification
 
-** TODO Improvements
+** Other theme switchers
 
- - Finish and test properly
-   - Currently only tested with color-theme-6.6.0 on linux
- - Implement reverse cycling for S-f7 and S-C-f7 (I think these
-   bindings are possible?)
+   Other theme switchers exist and may be checked out [[http://www.emacswiki.org/emacs/ColorTheme][here]]
 
